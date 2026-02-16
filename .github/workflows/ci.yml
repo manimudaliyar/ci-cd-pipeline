@@ -40,3 +40,14 @@ jobs:
         with:
           name: dist-files
           path: dist
+  deploy:
+    needs: build
+    uses: ./.github/workflows/deploy.yml
+    with:
+      dist-artifact: dist-files
+  deployment-result:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get deployment result
+        run: 'echo "Deployment result: ${{ needs.deploy.outputs.result  }}"'

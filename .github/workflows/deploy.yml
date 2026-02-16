@@ -1,0 +1,30 @@
+name: Deployment workflow
+on:
+  workflow_call:
+    inputs:
+      dist-artifact:
+        description: Uploaded artifact from test job
+        required: false
+        default: dist
+        type: string
+    outputs:
+      result:
+        description: Result of the deployment
+        value: ${{ jobs.deploy.outputs.deployment-outcome  }}
+jobs:
+  deploy:
+    outputs:
+      deployment-outcome: ${{ steps.deploy-result.outputs.deployment-status  }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ inputs.dist-artifact }}
+      - name: List artifact files
+        run: ls
+      - name: Deploy app
+        run: echo "Deploying app..."
+      - name: Deployment result
+        id: deploy-result
+        run: echo "deployment-status: sucess" >> $GITHUB_OUTPUTS
