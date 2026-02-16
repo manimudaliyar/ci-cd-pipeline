@@ -27,4 +27,4 @@ jobs:
         run: echo "Deploying app..."
       - name: Deployment result
         id: deploy-result
-        run: echo "deployment-status: sucess" >> $GITHUB_OUTPUTS
+        run: echo "deployment-status=sucess" >> $GITHUB_OUTPUTS
