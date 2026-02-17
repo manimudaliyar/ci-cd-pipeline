@@ -1,33 +1,39 @@
+# This workflow will build and test a Node.js project, and then deploy it if the tests pass.
 name: CI-CD Workflow
+# Trigger the workflow on push to main branch and on pull request opened against main branch
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+# Define the jobs to run in this workflow
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  test: # Define the test job
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
     steps:
-      - name: Get code
+      - name: Get code # Checkout the repository code
         uses: actions/checkout@v6
-      - name: Cache dependencies
+      - name: Cache dependencies # Cache node_modules to speed up subsequent runs
         id: cache
         uses: actions/cache@v5
         with:
-          path: node_modules
-          key: depen-node-modules-${{ hashFiles('**/package-lock.json') }}
-      - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
+          path: node_modules # Cache the node_modules directory
+          key: node-modules-${{ hashFiles('**/package-lock.json') }} # Use a hash of package-lock.json as the cache key
+      - name: Install Dependencies # Install project dependencies
+        if: steps.cache.outputs.cache-hit != 'true' # Only run npm ci if the cache was not hit
         run: npm ci
-      - name: Run tests
+      - name: Run tests # Run the test suite
         id: run-tests
         run: npm run test
-      - name: Upload Test result
+      - name: Upload Test result # Upload test results if the tests fail
         if: failure() && steps.run-tests.outcome == 'failure'
         uses: actions/upload-artifact@v5
         with:
           name: test-results
           path: test.json
-  build:
+  build: # Define the build job
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -38,31 +44,31 @@ jobs:
         uses: actions/cache@v5
         with:
           path: node_modules
-          key: depen-node-modules-${{ hashFiles('**/package-lock.json') }}
+          key: node-modules-${{ hashFiles('**/package-lock.json') }}
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
-      - name: Build app
+      - name: Build app # Build the application
         run: npm run build
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+      - name: Upload artifacts # Upload the build artifacts for use in the deployment job
+        uses: actions/upload-artifact@v5 
         with:
           name: dist-files
           path: dist
-  deploy:
+  deploy: # Define the deployment job
     needs: build
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/deploy.yml # Call the deployment workflow defined in deploy.yml
     with:
-      dist-artifact: dist-files
-  deployment-result:
+      dist-artifact: dist-files # Pass the name of the artifact to the deployment workflow
+  deployment-result: # Define a job to report the deployment result
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Get deployment result
+      - name: Get deployment result # Report the result of the deployment
         run: 'echo "Deployment result: ${{ needs.deploy.outputs.result  }}"'
-  report:
+  report: # Define a job to generate a report if any of the previous jobs fail
     needs: [test, deploy]
-    if: failure()
+    if: failure() # Only run this job if any of the previous jobs fail
     runs-on: ubuntu-latest
     steps:
       - name: Generate report

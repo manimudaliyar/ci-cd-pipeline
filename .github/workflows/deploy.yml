@@ -1,30 +1,30 @@
-name: Deployment workflow
+name: Deployment workflow # This workflow is called by the main CI workflow to handle deployment
 on:
-  workflow_call:
-    inputs:
-      dist-artifact:
+  workflow_call: # This allows this workflow to be called by another workflow
+    inputs: # Define the inputs that this workflow expects
+      dist-artifact: # Input for the name of the artifact containing the build files
         description: Uploaded artifact from test job
         required: false
         default: dist
         type: string
-    outputs:
-      result:
+    outputs: # Define the outputs that this workflow will produce
+      result: # Output for the result of the deployment
         description: Result of the deployment
         value: ${{ jobs.deploy.outputs.deployment-outcome  }}
-jobs:
+jobs: # Define the jobs to run in this workflow
   deploy:
     outputs:
-      deployment-outcome: ${{ steps.deploy-result.outputs.deployment-status  }}
+      deployment-outcome: ${{ steps.deploy-result.outputs.deployment-status  }} # Set the deployment-outcome output to the value of deployment-status from the deploy-result step
     runs-on: ubuntu-latest
     steps:
       - name: Get artifact
         uses: actions/download-artifact@v6
         with:
-          name: ${{ inputs.dist-artifact }}
-      - name: List artifact files
+          name: ${{ inputs.dist-artifact }} # Download the artifact specified by the dist-artifact input
+      - name: List artifact files # List the files in the artifact to verify it was downloaded correctly
         run: ls
       - name: Deploy app
         run: echo "Deploying app..."
-      - name: Deployment result
+      - name: Deployment result # Set the deployment result output to success for demonstration purposes
         id: deploy-result
-        run: echo "deployment-status=sucess" >> $GITHUB_OUTPUT
+        run: echo "deployment-status=success" >> $GITHUB_OUTPUT
